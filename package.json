@@ -1,0 +1,31 @@
+{
+  "name": "mantri",
+  "version": "0.1.0",
+  "description": "Voice-first email assistant for ProtonMail",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "serve": "node build/server.js",
+    "setup": "npx tsx scripts/setup-agent.ts",
+    "update-tools": "npx tsx scripts/update-agent-tools.ts"
+  },
+  "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.39.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "express": "^5.2.1",
+    "html-to-text": "^9.0.5",
+    "imapflow": "^1.2.16",
+    "mailparser": "^3.9.4",
+    "nodemailer": "^8.0.3",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/html-to-text": "^9.0.4",
+    "@types/mailparser": "^3.4.6",
+    "@types/node": "^22.0.0",
+    "@types/nodemailer": "^7.0.11",
+    "typescript": "^5.7.0"
+  }
+}
