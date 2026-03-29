@@ -1,0 +1,17 @@
+---
+description: User often dictates prompts via speech-to-text; infer intent and ignore transcription noise.
+alwaysApply: true
+---
+
+# Voice-to-text and dictation
+
+The user frequently writes prompts using speech recognition (voice detection / speech-to-text). Transcripts often contain:
+
+- Spelling mistakes, wrong homophones, or phonetically similar words (e.g. "laterally" vs "literally", "mantri" vs "mantra")
+- Missing or extra small words, odd punctuation, or run-on phrasing
+
+**How to respond**
+
+- Infer the **intended meaning** from context; do not treat odd spellings or misheard words as strict literal instructions when a sensible reading exists.
+- Do not nitpick spelling, grammar, or diction in the user's messages unless they explicitly ask for copy editing.
+- Prefer acting on the most reasonable interpretation; ask a **short** clarifying question only when the request would materially change with different readings.
