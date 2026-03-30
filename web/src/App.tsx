@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import SignIn from './pages/SignIn'
 import Dashboard from './pages/Dashboard'
+import DevPanel from './pages/DevPanel'
 
 type AppState = 'loading' | 'unauthenticated' | 'onboarding' | 'ready'
 
@@ -14,9 +15,30 @@ function getProvider(session: Session): string {
   )
 }
 
+declare global {
+  interface Window {
+    toggleDevMode: () => void
+  }
+}
+
 export default function App() {
   const [appState, setAppState] = useState<AppState>('loading')
   const [session, setSession] = useState<Session | null>(null)
+  const [devMode, setDevMode] = useState(() => localStorage.getItem('mantri_dev') === '1')
+  const [devPanelOpen, setDevPanelOpen] = useState(false)
+  const devModeRef = useRef(devMode)
+
+  useEffect(() => {
+    devModeRef.current = devMode
+    window.toggleDevMode = () => {
+      const next = !devModeRef.current
+      devModeRef.current = next
+      localStorage.setItem('mantri_dev', next ? '1' : '0')
+      setDevMode(next)
+      if (next) setDevPanelOpen(true)
+      console.log(`%c Mantri dev mode ${next ? 'ON 🟢' : 'OFF 🔴'}`, 'font-weight:bold;font-size:14px')
+    }
+  }, [devMode])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -115,5 +137,21 @@ export default function App() {
     return <SignIn />
   }
 
-  return <Dashboard user={session.user} />
+  const provider = getProvider(session)
+
+  return (
+    <>
+      <Dashboard
+        user={session.user}
+        devMode={devMode}
+        onOpenDevPanel={() => setDevPanelOpen(true)}
+      />
+      {devMode && devPanelOpen && (
+        <DevPanel
+          provider={provider}
+          onClose={() => setDevPanelOpen(false)}
+        />
+      )}
+    </>
+  )
 }

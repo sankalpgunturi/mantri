@@ -3,9 +3,11 @@ import { supabase } from '../lib/supabase'
 
 interface Props {
   user: User
+  devMode: boolean
+  onOpenDevPanel: () => void
 }
 
-export default function Dashboard({ user }: Props) {
+export default function Dashboard({ user, devMode, onOpenDevPanel }: Props) {
   async function handleSignOut() {
     await supabase.auth.signOut()
   }
@@ -17,6 +19,12 @@ export default function Dashboard({ user }: Props) {
 
   return (
     <div className="dashboard-wrapper">
+      {devMode && (
+        <button className="dev-badge" onClick={onOpenDevPanel} title="Open tool sandbox">
+          DEV
+        </button>
+      )}
+
       {avatar && (
         <img src={avatar} alt={name} className="avatar" referrerPolicy="no-referrer" />
       )}

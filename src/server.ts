@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import profileRoutes from './routes/profile.js'
 import emailRoutes from './routes/email.js'
+import devRoutes from './routes/dev.js'
 
 const app = express()
 const PORT = Number(process.env.PORT) || 3001
@@ -21,6 +22,7 @@ app.get('/health', (_req, res) => {
 
 app.use('/api', profileRoutes)
 app.use('/api', emailRoutes)
+app.use('/api', devRoutes)
 
 app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`)
