@@ -1,44 +1,25 @@
-import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import 'dotenv/config'
+import express from 'express'
+import cors from 'cors'
+import profileRoutes from './routes/profile.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const app = express()
+const PORT = Number(process.env.PORT) || 3001
 
-// Load .env BEFORE importing config (which reads process.env at import time)
-try {
-  const envPath = resolve(__dirname, "..", ".env");
-  const envContent = readFileSync(envPath, "utf-8");
-  for (const line of envContent.split("\n")) {
-    if (line.startsWith("#") || !line.trim() || !line.includes("=")) continue;
-    const eqIdx = line.indexOf("=");
-    const key = line.slice(0, eqIdx).trim();
-    const value = line.slice(eqIdx + 1).trim();
-    if (!process.env[key]) {
-      process.env[key] = value;
-    }
-  }
-} catch {}
+const allowedOrigins = [
+  'http://localhost:3000',
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[]
 
-async function main() {
-  const { validateElevenLabsConfig, config } = await import("./config.js");
-  const { router } = await import("./api/routes.js");
-  const express = (await import("express")).default;
+app.use(cors({ origin: allowedOrigins, credentials: true }))
+app.use(express.json())
 
-  validateElevenLabsConfig();
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok' })
+})
 
-  const app = express();
+app.use('/api', profileRoutes)
 
-  app.use(express.json());
-  app.use(express.static(resolve(__dirname, "..", "public")));
-
-  app.use(router);
-
-  app.listen(config.port, () => {
-    console.log(`Mantri server running at http://localhost:${config.port}`);
-  });
-}
-
-main().catch((err) => {
-  console.error("Fatal error:", err);
-  process.exit(1);
-});
+app.listen(PORT, () => {
+  console.log(`API server running on http://localhost:${PORT}`)
+})
