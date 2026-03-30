@@ -1,8 +1,8 @@
-import { createUserClient, createAdminClient } from '../lib/supabase.js'
+import { createAdminClient } from '../lib/supabase.js'
 
 const BUCKET = 'profiles'
 
-// ─── Path helpers ─────────────────────────────────────────────────────────────
+// ─── Path helpers ────────────────────────────────────────────────────────────
 
 function profilePath(userId: string) {
   return `${userId}/profile.md`
@@ -20,51 +20,8 @@ function todayDate(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-// ─── Profile template ─────────────────────────────────────────────────────────
+// ─── Profile ─────────────────────────────────────────────────────────────────
 
-const PROFILE_TEMPLATE = `# Mantri — User Profile
-
-## Identity
-- Name:
-- Email:
-
-## Priority Contacts
-
-## Email Preferences
-- Important senders:
-- Mute senders:
-
-## Communication Style
-- Default tone:
-
-## Behavior Rules
-- Always confirm before sending any email
-- Always confirm before permanent deletion
-
-## Learned Patterns
-`
-
-// ─── Profile ──────────────────────────────────────────────────────────────────
-
-/**
- * Creates profile.md for a new user if it doesn't already exist.
- * Uses the user's own access token so Storage RLS is satisfied.
- */
-export async function initProfile(userId: string, accessToken: string): Promise<void> {
-  const supabase = createUserClient(accessToken)
-
-  const { data: existing } = await supabase.storage.from(BUCKET).list(userId)
-  if (existing?.some((f) => f.name === 'profile.md')) return
-
-  const { error } = await supabase.storage.from(BUCKET).upload(profilePath(userId), PROFILE_TEMPLATE, {
-    contentType: 'text/markdown',
-  })
-  if (error) throw new Error(`Failed to create profile: ${error.message}`)
-}
-
-/**
- * Reads profile.md content for a user (admin client).
- */
 export async function readProfile(userId: string): Promise<string> {
   const supabase = createAdminClient()
   const { data, error } = await supabase.storage.from(BUCKET).download(profilePath(userId))
@@ -72,19 +29,16 @@ export async function readProfile(userId: string): Promise<string> {
   return data.text()
 }
 
-/**
- * Overwrites profile.md content for a user (admin client).
- */
-export async function updateProfile(userId: string, content: string): Promise<void> {
+export async function writeProfile(userId: string, content: string): Promise<void> {
   const supabase = createAdminClient()
   const { error } = await supabase.storage.from(BUCKET).upload(profilePath(userId), content, {
     contentType: 'text/markdown',
     upsert: true,
   })
-  if (error) throw new Error(`Failed to update profile: ${error.message}`)
+  if (error) throw new Error(`Failed to write profile: ${error.message}`)
 }
 
-// ─── Templates ────────────────────────────────────────────────────────────────
+// ─── Templates ───────────────────────────────────────────────────────────────
 
 export async function listTemplates(userId: string): Promise<string[]> {
   const supabase = createAdminClient()
@@ -117,7 +71,7 @@ export async function deleteTemplate(userId: string, name: string): Promise<void
   if (error) throw new Error(`Failed to delete template "${name}": ${error.message}`)
 }
 
-// ─── Conversation Logs ────────────────────────────────────────────────────────
+// ─── Conversation Logs ───────────────────────────────────────────────────────
 
 export async function readLog(userId: string, date?: string): Promise<string> {
   const supabase = createAdminClient()
@@ -167,7 +121,6 @@ export async function searchLogs(
   fromDate?: string,
   toDate?: string
 ): Promise<Array<{ date: string; line: string }>> {
-  const supabase = createAdminClient()
   const dates = await listLogDates(userId)
 
   const filtered = dates.filter((d) => {
@@ -176,12 +129,16 @@ export async function searchLogs(
     return true
   })
 
+  const supabase = createAdminClient()
   const results: Array<{ date: string; line: string }> = []
   const lowerQuery = query.toLowerCase()
 
   for (const date of filtered) {
-    const { data, error } = await supabase.storage.from(BUCKET).download(logPath(userId, date))
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .download(logPath(userId, date))
     if (error || !data) continue
+
     const text = await data.text()
     for (const line of text.split('\n')) {
       if (line.toLowerCase().includes(lowerQuery)) {

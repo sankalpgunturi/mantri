@@ -217,11 +217,12 @@ const tools: any[] = [
       required: ["to", "subject", "body"],
     },
   },
+  // ── Profile tools ──
   {
     type: "client",
     name: "read_profile",
     description:
-      "Read user preference profile. Call at start of every conversation.",
+      "Read the user preference profile. Call silently at the start of every conversation to personalize responses. The profile contains behavior rules, contacts, learned patterns, and communication style.",
     expectsResponse: true,
     responseTimeoutSecs: 10,
     parameters: {
@@ -229,7 +230,7 @@ const tools: any[] = [
       properties: {
         section: {
           type: "string",
-          description: "Section to read, or omit for full profile",
+          description: 'Specific section to read (e.g. "Behavior Rules"). Omit for full profile.',
         },
       },
     },
@@ -237,67 +238,168 @@ const tools: any[] = [
   {
     type: "client",
     name: "update_profile",
-    description: "Update user preferences when user teaches you something.",
+    description:
+      "Update a section of the user profile when they teach you a preference, introduce an important contact, or establish a new rule.",
     expectsResponse: true,
     responseTimeoutSecs: 10,
     parameters: {
       type: "object",
       properties: {
-        section: { type: "string", description: "Profile section" },
-        content: { type: "string", description: "Content to add" },
-        mode: { type: "string", description: "append or replace" },
+        section: { type: "string", description: 'Profile section (e.g. "Behavior Rules")' },
+        content: { type: "string", description: "Content to add or set" },
+        mode: {
+          type: "string",
+          enum: ["append", "replace"],
+          description: '"append" adds to existing, "replace" overwrites the section',
+        },
       },
       required: ["section", "content"],
     },
   },
   {
     type: "client",
-    name: "log_interaction",
-    description: "Log a user behavior pattern for learning.",
-    expectsResponse: true,
-    responseTimeoutSecs: 10,
-    parameters: {
-      type: "object",
-      properties: {
-        action: { type: "string", description: "What happened" },
-        context: { type: "string", description: "Context" },
-        outcome: { type: "string", description: "What to learn" },
-      },
-      required: ["action", "context", "outcome"],
-    },
-  },
-  // ── New conversation memory + web tools ──
-  {
-    type: "client",
-    name: "get_conversation_log",
+    name: "delete_profile_entry",
     description:
-      "Retrieve a past conversation log by date. Use when user references something from a previous day.",
+      'Surgically remove a single entry from a profile section. Use when user says "forget that rule" or revokes a preference — avoids overwriting the whole section.',
     expectsResponse: true,
     responseTimeoutSecs: 10,
     parameters: {
       type: "object",
       properties: {
-        date: {
+        section: { type: "string", description: "Profile section containing the entry" },
+        entry_substring: {
           type: "string",
-          description:
-            "Date in YYYY-MM-DD format. Defaults to today if not provided.",
+          description: "Substring of the line to remove. First matching line is deleted.",
         },
       },
+      required: ["section", "entry_substring"],
     },
   },
+  {
+    type: "client",
+    name: "log_interaction",
+    description:
+      "Append a timestamped entry to the Learned Patterns section. Use to record durable behavioral patterns observed during conversation.",
+    expectsResponse: true,
+    responseTimeoutSecs: 10,
+    parameters: {
+      type: "object",
+      properties: {
+        entry: {
+          type: "string",
+          description: 'What was learned (e.g. "User ignores all recruiter emails from staffing agencies")',
+        },
+      },
+      required: ["entry"],
+    },
+  },
+  // ── Template tools ──
+  {
+    type: "client",
+    name: "list_templates",
+    description: "List all saved email templates by name. Use before get_template to discover what's available.",
+    expectsResponse: true,
+    responseTimeoutSecs: 10,
+    parameters: { type: "object", properties: {} },
+  },
+  {
+    type: "client",
+    name: "get_template",
+    description: "Retrieve a saved email template by name.",
+    expectsResponse: true,
+    responseTimeoutSecs: 10,
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Template name (e.g. \"rejection_reply\")" },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    type: "client",
+    name: "save_template",
+    description:
+      "Save or overwrite an email template. Use when the user creates or refines a reusable email format.",
+    expectsResponse: true,
+    responseTimeoutSecs: 10,
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Template name, no spaces (e.g. \"rejection_reply\")" },
+        content: { type: "string", description: "Full template text, including any placeholders" },
+      },
+      required: ["name", "content"],
+    },
+  },
+  {
+    type: "client",
+    name: "delete_template",
+    description: "Delete a saved email template.",
+    expectsResponse: true,
+    responseTimeoutSecs: 10,
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Template name to delete" },
+      },
+      required: ["name"],
+    },
+  },
+  // ── Memory / history tools ──
   {
     type: "client",
     name: "save_conversation_note",
     description:
-      "Save an important fact or decision to today's conversation log for future reference.",
+      "Append a timestamped note to today's conversation log. Use mid-conversation to record important facts, decisions, or context for future recall.",
     expectsResponse: true,
     responseTimeoutSecs: 10,
     parameters: {
       type: "object",
       properties: {
-        note: { type: "string", description: "The note to save" },
+        note: { type: "string", description: "The fact or decision to save" },
       },
       required: ["note"],
+    },
+  },
+  {
+    type: "client",
+    name: "get_conversation_log",
+    description:
+      "Retrieve a conversation log for a specific date. Use when the user references something from a past session.",
+    expectsResponse: true,
+    responseTimeoutSecs: 10,
+    parameters: {
+      type: "object",
+      properties: {
+        date: { type: "string", description: "Date in YYYY-MM-DD format. Defaults to today." },
+      },
+    },
+  },
+  {
+    type: "client",
+    name: "list_conversation_history",
+    description:
+      "List all dates that have conversation logs, newest first. Use to know what history is available.",
+    expectsResponse: true,
+    responseTimeoutSecs: 10,
+    parameters: { type: "object", properties: {} },
+  },
+  {
+    type: "client",
+    name: "search_conversation_logs",
+    description:
+      'Search across all conversation logs for a keyword or phrase. Use when the user says "remember when I mentioned X" and you need to find the date.',
+    expectsResponse: true,
+    responseTimeoutSecs: 20,
+    parameters: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Text to search for (case-insensitive)" },
+        from_date: { type: "string", description: "Start of date range, YYYY-MM-DD (inclusive)" },
+        to_date: { type: "string", description: "End of date range, YYYY-MM-DD (inclusive)" },
+      },
+      required: ["query"],
     },
   },
   {

@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import SignIn from './pages/SignIn'
-import Dashboard from './pages/Dashboard'
 import DevPanel from './pages/DevPanel'
+import Profile from './pages/Profile'
 
 type AppState = 'loading' | 'unauthenticated' | 'onboarding' | 'ready'
 
@@ -19,6 +19,54 @@ declare global {
   interface Window {
     toggleDevMode: () => void
   }
+}
+
+/**
+ * Builds a map of profile tool handlers for ElevenLabs ConvAI client tools.
+ * Each handler proxies the tool call to POST /api/profile/tool/:name with the
+ * user's Supabase Bearer token. Wire these into your ElevenLabs conversation
+ * setup when integrating the voice agent.
+ *
+ * Usage with ElevenLabs:
+ *   const handlers = buildProfileToolHandlers(session.access_token)
+ *   // pass handlers.read_profile, handlers.update_profile, etc. as client tools
+ */
+export function buildProfileToolHandlers(
+  accessToken: string
+): Record<string, (params: Record<string, unknown>) => Promise<string>> {
+  const TOOL_NAMES = [
+    'read_profile',
+    'update_profile',
+    'delete_profile_entry',
+    'log_interaction',
+    'list_templates',
+    'get_template',
+    'save_template',
+    'delete_template',
+    'save_conversation_note',
+    'get_conversation_log',
+    'list_conversation_history',
+    'search_conversation_logs',
+  ] as const
+
+  const handlers: Record<string, (params: Record<string, unknown>) => Promise<string>> = {}
+
+  for (const name of TOOL_NAMES) {
+    handlers[name] = async (params) => {
+      const res = await fetch(`/api/profile/tool/${name}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(params),
+      })
+      const data = await res.json() as { result?: string; error?: string }
+      return data.result ?? data.error ?? 'Done.'
+    }
+  }
+
+  return handlers
 }
 
 export default function App() {
@@ -65,8 +113,6 @@ export default function App() {
 
     // If Composio just redirected us back after a successful OAuth grant,
     // trust the connection is made and skip straight to the dashboard.
-    // This also prevents an infinite redirect loop if the status check races
-    // against Composio's propagation delay.
     const params = new URLSearchParams(window.location.search)
     if (params.get('status') === 'success') {
       window.history.replaceState({}, '', window.location.pathname)
@@ -141,11 +187,16 @@ export default function App() {
 
   return (
     <>
-      <Dashboard
-        user={session.user}
-        devMode={devMode}
-        onOpenDevPanel={() => setDevPanelOpen(true)}
-      />
+      <Profile user={session.user} accessToken={session.access_token} />
+      {devMode && (
+        <button
+          className="dev-badge"
+          onClick={() => setDevPanelOpen(true)}
+          title="Open tool sandbox"
+        >
+          DEV
+        </button>
+      )}
       {devMode && devPanelOpen && (
         <DevPanel
           provider={provider}

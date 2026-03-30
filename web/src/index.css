@@ -444,7 +444,303 @@ body {
   cursor: pointer;
   transition: background 0.15s;
 }
+.sign-out-btn:hover { background: #1f1f1f; }
 
-.sign-out-btn:hover {
-  background: #1f1f1f;
+/* ── Editor shell (main app layout after sign-in) ──────────────────────────── */
+
+.app-loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  background: var(--bg);
 }
+
+.editor-shell {
+  display: flex;
+  height: 100vh;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+
+.editor-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-sidebar-top {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 0.75rem 0.75rem;
+}
+
+.editor-wordmark {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  padding: 0 0.35rem;
+  margin-bottom: 1.5rem;
+}
+
+.editor-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.editor-nav-label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #3a3a3a;
+  padding: 0 0.35rem;
+  margin-bottom: 0.2rem;
+}
+
+.editor-nav-item {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.82rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.editor-nav-item:hover { background: #191919; color: var(--text); }
+.editor-nav-item.active { background: #1e1e1e; color: var(--text); }
+
+.editor-nav-new {
+  color: #444;
+  margin-top: 0.25rem;
+}
+.editor-nav-new:hover { color: var(--muted); }
+.editor-nav-new.active { color: var(--text); }
+
+.editor-nav-row {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+.editor-nav-row .editor-nav-item { flex: 1; min-width: 0; }
+
+.editor-nav-delete {
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.2rem 0.35rem;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: color 0.1s, background 0.1s;
+}
+.editor-nav-delete:hover { color: var(--red); background: rgba(248,113,113,0.08); }
+
+.editor-sidebar-bottom {
+  flex-shrink: 0;
+  padding: 0.875rem 0.75rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.editor-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
+.editor-user-name {
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editor-signout-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: #555;
+  font-size: 0.78rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  text-align: left;
+}
+.editor-signout-btn:hover { color: var(--muted); border-color: #333; }
+
+/* ── Main editor area ────────────────────────────────────────────────────── */
+
+.editor-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  position: relative;
+}
+
+.editor-tabbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  height: 42px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.editor-tab-filename {
+  font-size: 0.8rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--muted);
+}
+
+.editor-mode-toggle {
+  display: flex;
+  background: #111;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.editor-mode-btn {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.editor-mode-btn.active { background: #1e1e1e; color: var(--text); }
+.editor-mode-btn:hover:not(.active) { color: var(--muted); }
+
+.editor-save-error {
+  font-size: 0.78rem;
+  color: var(--red);
+  padding: 0.5rem 1.25rem;
+  border-bottom: 1px solid rgba(248,113,113,0.15);
+  background: rgba(248,113,113,0.05);
+  flex-shrink: 0;
+}
+
+/* Split pane */
+.editor-split {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.editor-textarea {
+  flex: 1;
+  background: #0c0c0c;
+  border: none;
+  border-right: 1px solid var(--border);
+  color: #c9d1d9;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.82rem;
+  line-height: 1.75;
+  padding: 1.25rem 1.5rem;
+  resize: none;
+  outline: none;
+  overflow-y: auto;
+}
+
+.editor-preview-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 2rem;
+  background: var(--bg);
+}
+
+/* New template form */
+.editor-new-template {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-name-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.9rem;
+  padding: 0.875rem 1.5rem;
+  outline: none;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+.editor-name-input:focus { border-color: #333; }
+.editor-name-input::placeholder { color: #333; }
+
+/* Save bar */
+.editor-savebar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.875rem 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  background: linear-gradient(to top, #0c0c0c 60%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.editor-savebar-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.editor-save-btn {
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.55rem 1.5rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.35);
+}
+.editor-save-btn:hover:not(:disabled) { opacity: 0.88; }
+.editor-save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Markdown preview */
+.md-preview { font-size: 0.875rem; line-height: 1.8; }
+.md-h1 { font-size: 1.25rem; font-weight: 700; color: var(--text); margin: 0.5rem 0 0.75rem; }
+.md-h2 { font-size: 0.95rem; font-weight: 600; color: var(--text); margin: 1.5rem 0 0.5rem; padding-bottom: 0.3rem; border-bottom: 1px solid var(--border); }
+.md-h3 { font-size: 0.875rem; font-weight: 600; color: #bbb; margin: 0.75rem 0 0.25rem; }
+.md-p { color: #999; margin: 0.15rem 0; }
+.md-li { color: #999; margin: 0.15rem 0 0.15rem 1.25rem; list-style: disc; }
+.md-spacer { height: 0.4rem; }

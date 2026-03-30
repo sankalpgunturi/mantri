@@ -5,9 +5,10 @@ interface Props {
   user: User
   devMode: boolean
   onOpenDevPanel: () => void
+  onOpenProfile: () => void
 }
 
-export default function Dashboard({ user, devMode, onOpenDevPanel }: Props) {
+export default function Dashboard({ user, devMode, onOpenDevPanel, onOpenProfile }: Props) {
   async function handleSignOut() {
     await supabase.auth.signOut()
   }
@@ -35,9 +36,14 @@ export default function Dashboard({ user, devMode, onOpenDevPanel }: Props) {
         <span className="badge success">{emailLabel} connected</span>
       </div>
 
-      <button className="sign-out-btn" onClick={handleSignOut}>
-        Sign out
-      </button>
+      <div className="dashboard-actions">
+        <button className="profile-link-btn" onClick={onOpenProfile}>
+          View profile
+        </button>
+        <button className="sign-out-btn" onClick={handleSignOut}>
+          Sign out
+        </button>
+      </div>
     </div>
   )
 }
