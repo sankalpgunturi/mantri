@@ -744,3 +744,345 @@ body {
 .md-p { color: #999; margin: 0.15rem 0; }
 .md-li { color: #999; margin: 0.15rem 0 0.15rem 1.25rem; list-style: disc; }
 .md-spacer { height: 0.4rem; }
+
+/* ── Home screen (main view after onboarding) ───────────────────────────── */
+
+.home-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.home-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.home-wordmark {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+
+.home-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.home-profile-btn,
+.home-signout-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.home-profile-btn:hover {
+  color: var(--text);
+  border-color: #444;
+  background: var(--surface);
+}
+.home-signout-btn:hover {
+  color: var(--red);
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+.home-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  gap: 0.5rem;
+}
+
+.home-greeting {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.home-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  margin-bottom: 1rem;
+}
+
+.home-hello {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+
+.home-subtitle {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+/* ── Call Me button ──────────────────────────────────────────────────── */
+
+.home-call-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  width: 140px;
+  height: 140px;
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.25s;
+  box-shadow: 0 8px 40px rgba(124, 58, 237, 0.35), 0 0 0 0 rgba(124, 58, 237, 0);
+  margin: 1rem 0;
+}
+.home-call-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 12px 48px rgba(124, 58, 237, 0.5), 0 0 0 0 rgba(124, 58, 237, 0);
+}
+.home-call-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.home-call-btn:disabled {
+  cursor: not-allowed;
+}
+.home-call-btn.calling {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  box-shadow: 0 8px 40px rgba(245, 158, 11, 0.35);
+}
+.home-call-btn.ringing {
+  background: linear-gradient(135deg, #059669 0%, #34d399 100%);
+  box-shadow: 0 8px 40px rgba(52, 211, 153, 0.35);
+  animation: home-pulse 2s ease-in-out infinite;
+}
+.home-call-btn.error {
+  background: linear-gradient(135deg, #dc2626 0%, #f87171 100%);
+  box-shadow: 0 8px 40px rgba(248, 113, 113, 0.35);
+}
+
+.home-call-btn-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.home-call-icon {
+  width: 32px;
+  height: 32px;
+}
+.home-call-icon.ringing {
+  animation: home-ring 0.6s ease-in-out infinite alternate;
+}
+
+.home-call-spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes home-pulse {
+  0%, 100% { box-shadow: 0 8px 40px rgba(52, 211, 153, 0.35), 0 0 0 0 rgba(52, 211, 153, 0.4); }
+  50% { box-shadow: 0 8px 40px rgba(52, 211, 153, 0.5), 0 0 0 20px rgba(52, 211, 153, 0); }
+}
+
+@keyframes home-ring {
+  0% { transform: rotate(-12deg); }
+  100% { transform: rotate(12deg); }
+}
+
+.home-hint {
+  font-size: 0.85rem;
+  color: #555;
+  text-align: center;
+  max-width: 300px;
+}
+
+/* ── Phone registration ─────────────────────────────────────────────────── */
+
+.phone-reg-desc {
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 0.25rem;
+}
+
+.phone-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.country-select {
+  padding: 0.75rem 0.6rem;
+  background: #1a1a1a;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  outline: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+.country-select:focus {
+  border-color: var(--purple);
+}
+
+.phone-reg-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.75rem 1rem;
+  background: #1a1a1a;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.phone-reg-input:focus {
+  border-color: var(--purple);
+}
+.phone-reg-input::placeholder {
+  color: #444;
+}
+
+.phone-reg-error {
+  font-size: 0.8rem;
+  color: var(--red);
+}
+
+/* ── Editor back button ─────────────────────────────────────────────────── */
+
+.editor-back-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.78rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  text-align: left;
+  margin-bottom: 0.25rem;
+}
+.editor-back-btn:hover {
+  color: var(--text);
+  border-color: #333;
+  background: #191919;
+}
+
+.editor-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Phone settings (inside profile editor) ─────────────────────────────── */
+
+.phone-settings {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2.5rem 3rem;
+}
+
+.phone-settings-inner {
+  max-width: 480px;
+}
+
+.phone-settings-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.phone-settings-desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 1.75rem;
+}
+
+.phone-settings-current {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 1.75rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.phone-settings-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #555;
+}
+
+.phone-settings-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+
+.phone-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.phone-settings-form .phone-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.phone-settings-save {
+  padding: 0.75rem 1.25rem;
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.phone-settings-save:hover:not(:disabled) { opacity: 0.88; }
+.phone-settings-save:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.phone-settings-success {
+  font-size: 0.8rem;
+  color: var(--green);
+}

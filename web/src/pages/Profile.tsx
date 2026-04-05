@@ -5,9 +5,15 @@ import { supabase } from '../lib/supabase'
 interface Props {
   user: User
   accessToken: string
+  onBack: () => void
 }
 
-type ActiveFile = 'profile' | { type: 'template'; name: string } | 'new-template'
+type ActiveFile = 'profile' | 'phone' | { type: 'template'; name: string } | 'new-template'
+
+const COUNTRIES = [
+  { code: '+91', label: 'IN +91', placeholder: '70134 57293' },
+  { code: '+1', label: 'US +1', placeholder: '(415) 555-1234' },
+] as const
 
 function apiFetch(path: string, accessToken: string, options: RequestInit = {}) {
   return fetch(path, {
@@ -42,7 +48,7 @@ function SimpleMarkdown({ content }: { content: string }) {
   return <div className="md-preview">{elements}</div>
 }
 
-export default function Profile({ user, accessToken }: Props) {
+export default function Profile({ user, accessToken, onBack }: Props) {
   const [activeFile, setActiveFile] = useState<ActiveFile>('profile')
 
   const [profileSaved, setProfileSaved] = useState('')
@@ -59,12 +65,21 @@ export default function Profile({ user, accessToken }: Props) {
   const [saveError, setSaveError] = useState('')
   const [loading, setLoading] = useState(true)
 
+  // Phone number state
+  const [phoneNumber, setPhoneNumber] = useState<string | null>(null)
+  const [phoneCountryIdx, setPhoneCountryIdx] = useState(0)
+  const [phoneDraft, setPhoneDraft] = useState('')
+  const [phoneError, setPhoneError] = useState('')
+  const [phoneSaving, setPhoneSaving] = useState(false)
+  const [phoneSuccess, setPhoneSuccess] = useState(false)
+
   const displayName = user.user_metadata?.full_name ?? user.email
   const avatar = user.user_metadata?.avatar_url as string | undefined
 
   useEffect(() => {
     loadProfile()
     loadTemplates()
+    loadPhone()
   }, [])
 
   useEffect(() => {
@@ -83,6 +98,54 @@ export default function Profile({ user, accessToken }: Props) {
       setProfileDraft(content)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function loadPhone() {
+    try {
+      const res = await apiFetch('/api/user/phone', accessToken)
+      const data = (await res.json()) as { phone_number: string | null }
+      setPhoneNumber(data.phone_number)
+    } catch { /* ignore */ }
+  }
+
+  async function savePhone(e: React.FormEvent) {
+    e.preventDefault()
+    setPhoneError('')
+    setPhoneSuccess(false)
+
+    const digits = phoneDraft.replace(/[\s\-()]/g, '')
+    const country = COUNTRIES[phoneCountryIdx]
+    const full = digits.startsWith('+') ? digits : `${country.code}${digits}`
+
+    if (!/^\+\d{7,15}$/.test(full)) {
+      setPhoneError('Enter a valid phone number')
+      return
+    }
+
+    setPhoneSaving(true)
+    try {
+      const provider =
+        (user.app_metadata?.provider as string | undefined) ??
+        (user.identities?.[0]?.provider as string | undefined) ??
+        'google'
+      const res = await apiFetch('/api/user/phone', accessToken, {
+        method: 'POST',
+        body: JSON.stringify({ phone_number: full, provider }),
+      })
+      const data = (await res.json()) as { success?: boolean; error?: string }
+      if (!res.ok || data.error) {
+        setPhoneError(data.error ?? 'Failed to update phone number')
+        return
+      }
+      setPhoneNumber(full)
+      setPhoneDraft('')
+      setPhoneSuccess(true)
+      setTimeout(() => setPhoneSuccess(false), 3000)
+    } catch {
+      setPhoneError('Network error. Please try again.')
+    } finally {
+      setPhoneSaving(false)
     }
   }
 
@@ -198,6 +261,8 @@ export default function Profile({ user, accessToken }: Props) {
   const filename =
     activeFile === 'profile'
       ? 'profile.md'
+      : activeFile === 'phone'
+      ? 'Phone Number'
       : activeFile === 'new-template'
       ? 'new template'
       : typeof activeFile === 'object'
@@ -212,7 +277,15 @@ export default function Profile({ user, accessToken }: Props) {
           <span className="editor-wordmark">Mantri</span>
 
           <nav className="editor-nav">
-            <span className="editor-nav-label">Profile</span>
+            <span className="editor-nav-label">Account</span>
+            <button
+              className={`editor-nav-item ${activeFile === 'phone' ? 'active' : ''}`}
+              onClick={() => setActiveFile('phone')}
+            >
+              Phone Number
+            </button>
+
+            <span className="editor-nav-label" style={{ marginTop: '1rem' }}>Profile</span>
             <button
               className={`editor-nav-item ${activeFile === 'profile' ? 'active' : ''}`}
               onClick={() => setActiveFile('profile')}
@@ -257,13 +330,15 @@ export default function Profile({ user, accessToken }: Props) {
         </div>
 
         <div className="editor-sidebar-bottom">
-          {avatar && (
-            <img src={avatar} alt="" className="editor-avatar" referrerPolicy="no-referrer" />
-          )}
-          <span className="editor-user-name">{displayName}</span>
-          <button className="editor-signout-btn" onClick={() => supabase.auth.signOut()}>
-            Sign out
+          <button className="editor-back-btn" onClick={onBack}>
+            ← Back to Mantri
           </button>
+          <div className="editor-sidebar-user">
+            {avatar && (
+              <img src={avatar} alt="" className="editor-avatar" referrerPolicy="no-referrer" />
+            )}
+            <span className="editor-user-name">{displayName}</span>
+          </div>
         </div>
       </aside>
 
@@ -275,7 +350,59 @@ export default function Profile({ user, accessToken }: Props) {
 
         {saveError && <p className="editor-save-error">{saveError}</p>}
 
-        {activeFile === 'new-template' ? (
+        {activeFile === 'phone' ? (
+          <div className="phone-settings">
+            <div className="phone-settings-inner">
+              <h2 className="phone-settings-title">Phone Number</h2>
+              <p className="phone-settings-desc">
+                Mantri calls this number when you tap "Call me". You can update it anytime.
+              </p>
+
+              {phoneNumber && (
+                <div className="phone-settings-current">
+                  <span className="phone-settings-label">Current number</span>
+                  <span className="phone-settings-value">{phoneNumber}</span>
+                </div>
+              )}
+
+              <form className="phone-settings-form" onSubmit={savePhone}>
+                <span className="phone-settings-label">
+                  {phoneNumber ? 'Change number' : 'Add your phone number'}
+                </span>
+                <div className="phone-input-row">
+                  <select
+                    className="country-select"
+                    value={phoneCountryIdx}
+                    onChange={(e) => {
+                      setPhoneCountryIdx(Number(e.target.value))
+                      setPhoneDraft('')
+                    }}
+                  >
+                    {COUNTRIES.map((c, i) => (
+                      <option key={c.code} value={i}>{c.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    className="phone-reg-input"
+                    type="tel"
+                    placeholder={COUNTRIES[phoneCountryIdx].placeholder}
+                    value={phoneDraft}
+                    onChange={(e) => setPhoneDraft(e.target.value)}
+                  />
+                  <button
+                    type="submit"
+                    className="phone-settings-save"
+                    disabled={phoneSaving || !phoneDraft.trim()}
+                  >
+                    {phoneSaving ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
+                {phoneError && <p className="phone-reg-error">{phoneError}</p>}
+                {phoneSuccess && <p className="phone-settings-success">Phone number updated</p>}
+              </form>
+            </div>
+          </div>
+        ) : activeFile === 'new-template' ? (
           <div className="editor-new-template">
             <input
               className="editor-name-input"

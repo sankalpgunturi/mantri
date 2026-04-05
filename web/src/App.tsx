@@ -4,8 +4,16 @@ import { supabase } from './lib/supabase'
 import SignIn from './pages/SignIn'
 import DevPanel from './pages/DevPanel'
 import Profile from './pages/Profile'
+import PhoneDisplay from './pages/PhoneDisplay'
+import PhoneRegistration from './pages/PhoneRegistration'
 
-type AppState = 'loading' | 'unauthenticated' | 'onboarding' | 'ready'
+type AppState =
+  | 'loading'
+  | 'unauthenticated'
+  | 'onboarding'
+  | 'phone-registration'
+  | 'ready'
+  | 'editing-profile'
 
 function getProvider(session: Session): string {
   return (
@@ -84,7 +92,7 @@ export default function App() {
       localStorage.setItem('mantri_dev', next ? '1' : '0')
       setDevMode(next)
       if (next) setDevPanelOpen(true)
-      console.log(`%c Mantri dev mode ${next ? 'ON 🟢' : 'OFF 🔴'}`, 'font-weight:bold;font-size:14px')
+      console.log(`%c Mantri dev mode ${next ? 'ON' : 'OFF'}`, 'font-weight:bold;font-size:14px')
     }
   }, [devMode])
 
@@ -111,13 +119,9 @@ export default function App() {
   async function runOnboarding(session: Session) {
     setAppState('onboarding')
 
-    // If Composio just redirected us back after a successful OAuth grant,
-    // trust the connection is made and skip straight to the dashboard.
     const params = new URLSearchParams(window.location.search)
     if (params.get('status') === 'success') {
       window.history.replaceState({}, '', window.location.pathname)
-      setAppState('ready')
-      return
     }
 
     try {
@@ -137,32 +141,37 @@ export default function App() {
       })
       const status = await statusRes.json() as { connected: boolean }
 
-      if (status.connected) {
-        setAppState('ready')
-        return
+      if (!status.connected && !params.get('status')) {
+        // Not connected — redirect to Composio
+        const connectRes = await fetch('/api/email/connect', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ provider }),
+        })
+
+        if (connectRes.ok) {
+          const { redirectUrl } = await connectRes.json() as { redirectUrl: string }
+          window.location.href = redirectUrl
+          return
+        }
       }
 
-      // Step 3: not connected — auto-redirect to Composio Connect Link
-      const connectRes = await fetch('/api/email/connect', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ provider }),
+      // Step 3: check if phone number is registered
+      const phoneRes = await fetch('/api/user/phone', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
       })
+      const phoneData = await phoneRes.json() as { phone_number: string | null }
 
-      if (!connectRes.ok) {
-        console.error('[onboarding] email/connect failed:', await connectRes.text())
+      if (!phoneData.phone_number) {
+        setAppState('phone-registration')
+      } else {
         setAppState('ready')
-        return
       }
-
-      const { redirectUrl } = await connectRes.json() as { redirectUrl: string }
-      window.location.href = redirectUrl
     } catch (err) {
       console.error('[onboarding]', err)
-      // fail open: show dashboard even if onboarding checks fail
       setAppState('ready')
     }
   }
@@ -185,9 +194,33 @@ export default function App() {
 
   const provider = getProvider(session)
 
+  if (appState === 'phone-registration') {
+    return (
+      <PhoneRegistration
+        accessToken={session.access_token}
+        provider={provider}
+        onComplete={() => setAppState('ready')}
+      />
+    )
+  }
+
+  if (appState === 'editing-profile') {
+    return (
+      <Profile
+        user={session.user}
+        accessToken={session.access_token}
+        onBack={() => setAppState('ready')}
+      />
+    )
+  }
+
   return (
     <>
-      <Profile user={session.user} accessToken={session.access_token} />
+      <PhoneDisplay
+        user={session.user}
+        accessToken={session.access_token}
+        onEditProfile={() => setAppState('editing-profile')}
+      />
       {devMode && (
         <button
           className="dev-badge"

@@ -125,7 +125,7 @@ router.post('/profile/tool/:name', requireAuth, async (req, res) => {
   }
 })
 
-async function dispatchProfileTool(
+export async function dispatchProfileTool(
   userId: string,
   toolName: string,
   params: Record<string, unknown>

@@ -1,0 +1,8 @@
+name = "mantri-bolna"
+main = "index.js"
+compatibility_date = "2024-12-01"
+
+[vars]
+
+# Secrets are set via: npx wrangler secret put SECRET_NAME --config worker/wrangler.toml
+# Required secrets: BOLNA_BRIDGE_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, COMPOSIO_API_KEY
